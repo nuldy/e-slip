@@ -1,4 +1,5 @@
-import { PageHeader } from "@/components/layout/PageHeader"
+import { MainLayout } from "@/layouts/MainLayout"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -9,89 +10,106 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table"
-
-/**
- * Formats a number as Indonesian Rupiah currency string.
- * @param {number} amount
- * @returns {string} Formatted string, e.g. "Rp 70.000"
- */
-function formatRupiah(amount) {
-  return `Rp ${amount.toLocaleString("id-ID")}`
-}
-
-/**
- * Returns the appropriate Badge variant className based on slip status.
- * @param {string} status
- * @returns {string} Tailwind className for the Badge
- */
-function getStatusBadgeClass(status) {
-  switch (status) {
-    case "PAID":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200"
-    case "EXPIRED":
-      return "bg-gray-100 text-gray-600 border-gray-200"
-    case "UNPAID":
-      return "bg-amber-100 text-amber-700 border-amber-200"
-    default:
-      return ""
-  }
-}
+import { formatRupiah } from "@/utils/formatters"
+import { getStatusBadgeClass } from "@/utils/slip"
+import { Plus, ReceiptText } from "lucide-react"
 
 /**
  * Slip list page component.
- * Displays e-slips in a Table layout (adapted from mobile card view).
+ * Displays a header card and an enlarged table listing e-slips.
  *
  * @param {object} props
  * @param {object} props.user - Current user info { salesId, outletId }
  * @param {Array} props.slips - Array of slip objects
- * @param {function} props.onCreateSlip - Navigate to create slip form
- * @param {function} props.onLogout - Handle logout action
+ * @param {function} props.onNavigate - Page navigation callback
+ * @param {function} props.onLogout - Logout callback
  */
-function SlipListPage({ user, slips, onCreateSlip, onLogout }) {
+export function SlipListPage({ user, slips, onNavigate, onLogout }) {
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader
-        title="E-SLIP"
-        subtitle={`Outlet ${user.outletId} · Sales ${user.salesId}`}
-      />
+    <MainLayout
+      user={user}
+      currentPage="list"
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="w-full space-y-6">
+        {/* Header Card matching table width */}
+        <Card className="w-full shadow-xs py-2">
+          <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <ReceiptText className="size-5 text-brand" />
+                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  Daftar E-Slip
+                </h2>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Kelola dan pantau seluruh transaksi e-slip untuk outlet {user?.outletId || "10011"}
+              </p>
+            </div>
 
-      <div className="mx-auto max-w-3xl px-4 py-6">
-        <div className="mb-4">
-          <Button onClick={onCreateSlip} className="w-full sm:w-auto">
-            + Buat E-SLIP
-          </Button>
-        </div>
+            <Button
+              onClick={() => onNavigate("form")}
+              className="gap-2 cursor-pointer w-full sm:w-auto font-medium"
+            >
+              <Plus className="size-4" />
+              Buat E-Slip
+            </Button>
+          </div>
+        </Card>
 
-        <div className="rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No. Slip</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-center">Status</TableHead>
+        {/* Enlarged Table with Distinct Header Row Styling */}
+        <div className="w-full overflow-hidden rounded-xl border bg-card shadow-xs">
+          <Table className="w-full">
+            <TableHeader className="bg-muted/70 border-b">
+              <TableRow className="hover:bg-transparent border-b">
+                <TableHead className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  No. Slip
+                </TableHead>
+                <TableHead className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Customer
+                </TableHead>
+                <TableHead className="py-4 px-6 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Total Estimasi
+                </TableHead>
+                <TableHead className="py-4 px-6 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Status
+                </TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {slips.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={4}
-                    className="py-8 text-center text-muted-foreground"
+                    className="py-12 text-center text-muted-foreground"
                   >
-                    Belum ada e-slip. Klik &quot;+ Buat E-SLIP&quot; untuk
-                    membuat yang pertama.
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <ReceiptText className="size-8 text-muted-foreground/40" />
+                      <p className="font-medium text-base">Belum ada e-slip</p>
+                      <p className="text-sm text-muted-foreground">
+                        Klik tombol &quot;Buat E-Slip&quot; untuk membuat pesanan baru.
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 slips.map((slip) => (
-                  <TableRow key={slip.id}>
-                    <TableCell className="font-medium">{slip.id}</TableCell>
-                    <TableCell>{slip.customer}</TableCell>
-                    <TableCell className="text-right font-semibold">
+                  <TableRow
+                    key={slip.id}
+                    className="hover:bg-muted/30 transition-colors border-b last:border-b-0"
+                  >
+                    <TableCell className="py-4 px-6 font-semibold text-foreground">
+                      {slip.id}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-foreground/90 font-medium">
+                      {slip.customer}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right font-bold text-foreground">
                       {formatRupiah(slip.total)}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="py-4 px-6 text-center">
                       <Badge
                         variant="outline"
                         className={getStatusBadgeClass(slip.status)}
@@ -105,16 +123,7 @@ function SlipListPage({ user, slips, onCreateSlip, onLogout }) {
             </TableBody>
           </Table>
         </div>
-
-        <div className="mt-4">
-          <Button variant="link" onClick={onLogout} className="text-destructive px-0">
-            Keluar
-          </Button>
-        </div>
       </div>
-    </div>
+    </MainLayout>
   )
 }
-
-export { SlipListPage }
-

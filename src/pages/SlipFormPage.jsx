@@ -1,42 +1,37 @@
 import { useState } from "react"
-import { PageHeader } from "@/components/layout/PageHeader"
+import { MainLayout } from "@/layouts/MainLayout"
 import {
   Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
   CardContent,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { generateSlipId } from "@/utils/slip"
 
 /**
- * Generates a unique slip ID based on current timestamp.
- * Format mirrors the pattern seen in the mobile app: long numeric string.
- * @returns {string} Generated slip ID
- */
-function generateSlipId() {
-  const now = new Date()
-  const pad = (n, len = 2) => String(n).padStart(len, "0")
-  return (
-    "1001" +
-    pad(now.getMonth() + 1) +
-    pad(now.getDate()) +
-    pad(now.getHours()) +
-    pad(now.getMinutes()) +
-    pad(now.getSeconds()) +
-    pad(now.getMilliseconds(), 3)
-  )
-}
-
-/**
- * Slip creation form page.
- * Collects customer details, address, SPO flag, and item search.
+ * Slip creation form page component.
+ * Displays breadcrumb navigation and collects customer details.
  *
  * @param {object} props
+ * @param {object} props.user - Logged in user info
  * @param {function} props.onSave - Callback with new slip data
- * @param {function} props.onCancel - Navigate back without saving
+ * @param {function} props.onNavigate - Page navigation callback
+ * @param {function} props.onLogout - Logout callback
  */
-function SlipFormPage({ onSave, onCancel }) {
+export function SlipFormPage({ user, onSave, onNavigate, onLogout }) {
   const [customerName, setCustomerName] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [address, setAddress] = useState("")
@@ -61,16 +56,42 @@ function SlipFormPage({ onSave, onCancel }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader
-        title="Buat E-SLIP"
-        subtitle="Item dan stok dari ERP (contoh)"
-      />
+    <MainLayout
+      user={user}
+      currentPage="form"
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="w-full max-w-2xl mx-auto space-y-6">
+        {/* Shadcn UI Breadcrumb */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => onNavigate("list")}
+                className="hover:text-foreground cursor-pointer"
+              >
+                Daftar E-Slip
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Buat E-Slip</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-      <div className="mx-auto mt-6 max-w-lg px-4">
-        <Card>
+        {/* Form Card */}
+        <Card className="shadow-xs">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Buat E-SLIP</CardTitle>
+            <CardDescription>
+              Item dan stok dari ERP (contoh)
+            </CardDescription>
+          </CardHeader>
+
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="customerName">Nama customer</Label>
                 <Input
@@ -105,13 +126,13 @@ function SlipFormPage({ onSave, onCancel }) {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5 py-1">
                 <Checkbox
                   id="hasSpo"
                   checked={hasSpo}
                   onCheckedChange={(checked) => setHasSpo(checked === true)}
                 />
-                <Label htmlFor="hasSpo" className="font-semibold">
+                <Label htmlFor="hasSpo" className="font-semibold cursor-pointer">
                   Ada SPO
                 </Label>
               </div>
@@ -129,30 +150,33 @@ function SlipFormPage({ onSave, onCancel }) {
                 />
               </div>
 
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium">Total estimasi</span>
-                <span className="text-sm font-bold">Rp 0</span>
+              <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3.5">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Total estimasi
+                </span>
+                <span className="text-base font-bold text-foreground">
+                  Rp 0
+                </span>
               </div>
 
-              <Button type="submit" className="w-full">
-                Simpan E-SLIP
-              </Button>
+              <div className="flex flex-col gap-2.5 pt-2">
+                <Button type="submit" className="w-full cursor-pointer">
+                  Simpan E-SLIP
+                </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
-                onClick={onCancel}
-              >
-                Batal
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                  onClick={() => onNavigate("list")}
+                >
+                  Batal
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </MainLayout>
   )
 }
-
-export { SlipFormPage }
-

@@ -2,45 +2,19 @@ import { useState } from "react"
 import { LoginPage } from "@/pages/LoginPage"
 import { SlipListPage } from "@/pages/SlipListPage"
 import { SlipFormPage } from "@/pages/SlipFormPage"
-
-/**
- * Dummy data mirroring the mobile app's example slips.
- */
-const INITIAL_SLIPS = [
-  {
-    id: "100112610080002",
-    customer: "Customer C",
-    total: 70000,
-    status: "EXPIRED",
-  },
-  {
-    id: "100112610080001",
-    customer: "Customer B",
-    total: 190000,
-    status: "PAID",
-  },
-]
-
-/**
- * Prototype user credentials mapping.
- * In a real app this would come from an API.
- */
-const PROTOTYPE_USERS = {
-  sales01: { password: "admin123", outletId: "10011" },
-}
+import { INITIAL_SLIPS, PROTOTYPE_USERS } from "@/utils/constants"
 
 /**
  * Root application component.
- * Manages page navigation via state-based conditional rendering
- * and holds all shared application state (user session, slips data).
+ * Manages high-level page routing and shared state (user session & e-slips).
  */
-function App() {
+export default function App() {
   const [currentPage, setCurrentPage] = useState("login")
   const [user, setUser] = useState(null)
   const [slips, setSlips] = useState(INITIAL_SLIPS)
 
   /**
-   * Handles login attempt with prototype credential validation.
+   * Validates credentials against prototype users and establishes session.
    * @param {{ salesId: string, password: string }} credentials
    */
   function handleLogin({ salesId, password }) {
@@ -55,7 +29,7 @@ function App() {
   }
 
   /**
-   * Handles logout by clearing user session and returning to login.
+   * Clears user session and navigates back to login page.
    */
   function handleLogout() {
     setUser(null)
@@ -63,12 +37,20 @@ function App() {
   }
 
   /**
-   * Handles saving a new slip and navigating back to the list.
-   * @param {object} newSlip - The new slip data from the form
+   * Appends a newly created slip and returns to the list view.
+   * @param {object} newSlip
    */
   function handleSaveSlip(newSlip) {
     setSlips((prev) => [newSlip, ...prev])
     setCurrentPage("list")
+  }
+
+  /**
+   * Navigation handler for switching views.
+   * @param {'login' | 'list' | 'form'} page
+   */
+  function handleNavigate(page) {
+    setCurrentPage(page)
   }
 
   if (currentPage === "login") {
@@ -78,8 +60,10 @@ function App() {
   if (currentPage === "form") {
     return (
       <SlipFormPage
+        user={user}
         onSave={handleSaveSlip}
-        onCancel={() => setCurrentPage("list")}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
       />
     )
   }
@@ -88,10 +72,8 @@ function App() {
     <SlipListPage
       user={user}
       slips={slips}
-      onCreateSlip={() => setCurrentPage("form")}
+      onNavigate={handleNavigate}
       onLogout={handleLogout}
     />
   )
 }
-
-export default App
