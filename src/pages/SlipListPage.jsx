@@ -17,7 +17,7 @@ import { SlipStatusBadge } from "@/components/slip/SlipStatusBadge"
 import { useAuth } from "@/hooks/useAuth"
 import { getSlips } from "@/services/slipService"
 import { formatDateTime, formatRupiah } from "@/utils/formatters"
-import { SLIP_STATUSES, getStatusLabel } from "@/utils/slip"
+import { SLIP_STATUSES } from "@/utils/slip"
 import { ChevronLeft, ChevronRight, Plus, ReceiptText, Search } from "lucide-react"
 
 const PAGE_SIZE = 10
@@ -124,7 +124,7 @@ export function SlipListPage() {
               onClick={() => updateParams({ status: value })}
               className="cursor-pointer"
             >
-              {getStatusLabel(value)}
+              {value}
             </Button>
           ))}
         </div>

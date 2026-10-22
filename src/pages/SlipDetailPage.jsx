@@ -29,7 +29,6 @@ import { ErrorState } from "@/components/common/ErrorState"
 import { SlipStatusBadge } from "@/components/slip/SlipStatusBadge"
 import { getSlipDetail } from "@/services/slipService"
 import { formatDateTime, formatRupiah } from "@/utils/formatters"
-import { getStatusLabel } from "@/utils/slip"
 
 const ERROR_MESSAGES = {
   404: "E-Slip tidak ditemukan.",
@@ -197,7 +196,7 @@ export function SlipDetailPage() {
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         {log.previous_status && (
                           <>
-                            <span className="text-muted-foreground">{getStatusLabel(log.previous_status)}</span>
+                            <span className="text-muted-foreground">{log.previous_status}</span>
                             <span className="text-muted-foreground">→</span>
                           </>
                         )}

@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-import { getStatusBadgeClass, getStatusLabel } from "@/utils/slip"
+import { getStatusBadgeClass } from "@/utils/slip"
 
 /**
  * Status badge for an E-Slip.
@@ -10,7 +10,7 @@ import { getStatusBadgeClass, getStatusLabel } from "@/utils/slip"
 export function SlipStatusBadge({ status }) {
   return (
     <Badge variant="outline" className={getStatusBadgeClass(status)}>
-      {getStatusLabel(status)}
+      {status}
     </Badge>
   )
 }
