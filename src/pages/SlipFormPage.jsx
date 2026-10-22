@@ -19,27 +19,21 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
+import { ItemPicker } from "@/components/slip/ItemPicker"
 import { createSlip } from "@/services/slipService"
 import { formatRupiah } from "@/utils/formatters"
-import { Plus, Trash2 } from "lucide-react"
-
-function createEmptyItem() {
-  return { key: crypto.randomUUID(), sku: "", item_name: "", quantity: "1", original_price: "", discount_price: "" }
-}
+import { Trash2 } from "lucide-react"
 
 // Perkiraan subtotal untuk tampilan; nilai final dihitung ulang oleh backend
 function estimateSubtotal(item) {
-  const price = item.discount_price !== "" ? Number(item.discount_price) : Number(item.original_price)
-  const subtotal = Number(item.quantity) * price
-  return Number.isFinite(subtotal) ? Math.round(subtotal * 100) / 100 : 0
+  const subtotal = (Number(item.quantity) || 0) * item.effective_price
+  return Math.round(subtotal * 100) / 100
 }
-
-const cellInputClass = "h-9 min-w-0"
 
 /**
  * Slip creation form page component.
- * Collects customer details and item rows, then creates the slip via the backend
- * and opens its detail page.
+ * Collects customer details and items picked from the catalog dropdown, then creates
+ * the slip via the backend and opens its detail page.
  */
 export function SlipFormPage() {
   const navigate = useNavigate()
@@ -49,23 +43,43 @@ export function SlipFormPage() {
   const [address, setAddress] = useState("")
   const [hasSpo, setHasSpo] = useState(false)
   const [spoNumber, setSpoNumber] = useState("")
-  const [items, setItems] = useState(() => [createEmptyItem()])
+  const [items, setItems] = useState([])
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   const totalEstimated = items.reduce((sum, item) => sum + estimateSubtotal(item), 0)
+  const selectedQuantities = Object.fromEntries(items.map((item) => [item.sku, Number(item.quantity) || 0]))
 
-  function updateItem(key, field, value) {
-    setItems((prev) => prev.map((item) => (item.key === key ? { ...item, [field]: value } : item)))
+  /** Adds a catalog item, or bumps its qty when it is already in the slip. */
+  function addItem(catalogItem) {
+    setItems((prev) => {
+      const existing = prev.find((item) => item.sku === catalogItem.sku)
+      if (existing) {
+        return prev.map((item) =>
+          item.sku === catalogItem.sku ? { ...item, quantity: String((Number(item.quantity) || 0) + 1) } : item
+        )
+      }
+      return [...prev, { ...catalogItem, quantity: "1" }]
+    })
   }
 
-  function removeItem(key) {
-    setItems((prev) => prev.filter((item) => item.key !== key))
+  function updateQuantity(sku, quantity) {
+    setItems((prev) => prev.map((item) => (item.sku === sku ? { ...item, quantity } : item)))
+  }
+
+  function removeItem(sku) {
+    setItems((prev) => prev.filter((item) => item.sku !== sku))
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError("")
+
+    if (items.length === 0) {
+      setError("Tambahkan minimal 1 item dari daftar item.")
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -76,11 +90,11 @@ export function SlipFormPage() {
         is_spo: hasSpo,
         spo_number: hasSpo ? spoNumber.trim() : "",
         items: items.map((item) => ({
-          sku: item.sku.trim(),
-          item_name: item.item_name.trim(),
+          sku: item.sku,
+          item_name: item.item_name,
           quantity: Number(item.quantity),
-          original_price: Number(item.original_price),
-          discount_price: item.discount_price === "" ? null : Number(item.discount_price),
+          original_price: item.original_price,
+          discount_price: item.discount_price,
         })),
       })
       navigate(`/slips/${created.slip_number}`, { replace: true })
@@ -110,7 +124,7 @@ export function SlipFormPage() {
         <CardHeader>
           <CardTitle className="text-xl font-bold">Buat E-SLIP</CardTitle>
           <CardDescription>
-            Isi data customer dan item yang akan dibayar di kasir.
+            Isi data customer dan pilih item yang akan dibayar di kasir.
           </CardDescription>
         </CardHeader>
 
@@ -181,116 +195,74 @@ export function SlipFormPage() {
               )}
             </div>
 
-            {/* Item rows */}
+            {/* Items: picked from the catalog dropdown; only qty is editable */}
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <Label className="font-semibold">Item</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setItems((prev) => [...prev, createEmptyItem()])}
-                  className="cursor-pointer gap-1"
-                >
-                  <Plus className="size-4" />
-                  Tambah item
-                </Button>
-              </div>
+              <Label className="font-semibold">Item</Label>
+              <ItemPicker onSelect={addItem} selectedQuantities={selectedQuantities} />
 
               <div className="overflow-x-auto rounded-lg border">
-                <table className="w-full min-w-[760px] text-sm">
+                <table className="w-full min-w-[640px] text-sm">
                   <thead className="bg-muted/70 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     <tr>
-                      <th className="px-3 py-2.5 w-32">SKU</th>
-                      <th className="px-3 py-2.5">Nama produk</th>
-                      <th className="px-3 py-2.5 w-20">Qty</th>
-                      <th className="px-3 py-2.5 w-32">Harga satuan</th>
-                      <th className="px-3 py-2.5 w-32">Harga setelah diskon</th>
-                      <th className="px-3 py-2.5 w-32 text-right">Subtotal</th>
+                      <th className="px-3 py-2.5">Item</th>
+                      <th className="px-3 py-2.5 w-36 text-right">Harga</th>
+                      <th className="px-3 py-2.5 w-24">Qty</th>
+                      <th className="px-3 py-2.5 w-36 text-right">Subtotal</th>
                       <th className="px-3 py-2.5 w-12" />
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item, index) => (
-                      <tr key={item.key} className="border-t align-top">
-                        <td className="px-3 py-2">
-                          <Input
-                            aria-label={`SKU item ${index + 1}`}
-                            placeholder="SKU"
-                            maxLength={50}
-                            value={item.sku}
-                            onChange={(e) => updateItem(item.key, "sku", e.target.value)}
-                            required
-                            className={cellInputClass}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            aria-label={`Nama produk item ${index + 1}`}
-                            placeholder="Nama produk"
-                            maxLength={255}
-                            value={item.item_name}
-                            onChange={(e) => updateItem(item.key, "item_name", e.target.value)}
-                            required
-                            className={cellInputClass}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            aria-label={`Qty item ${index + 1}`}
-                            type="number"
-                            min={1}
-                            step={1}
-                            value={item.quantity}
-                            onChange={(e) => updateItem(item.key, "quantity", e.target.value)}
-                            required
-                            className={cellInputClass}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            aria-label={`Harga satuan item ${index + 1}`}
-                            type="number"
-                            min={0}
-                            step="any"
-                            placeholder="0"
-                            value={item.original_price}
-                            onChange={(e) => updateItem(item.key, "original_price", e.target.value)}
-                            required
-                            className={cellInputClass}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            aria-label={`Harga setelah diskon item ${index + 1}`}
-                            type="number"
-                            min={0}
-                            max={item.original_price || undefined}
-                            step="any"
-                            placeholder="Opsional"
-                            value={item.discount_price}
-                            onChange={(e) => updateItem(item.key, "discount_price", e.target.value)}
-                            className={cellInputClass}
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-right font-medium leading-9">
-                          {formatRupiah(estimateSubtotal(item))}
-                        </td>
-                        <td className="px-3 py-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Hapus item ${index + 1}`}
-                            disabled={items.length === 1}
-                            onClick={() => removeItem(item.key)}
-                            className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                    {items.length === 0 ? (
+                      <tr className="border-t">
+                        <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
+                          Belum ada item. Cari dan klik item pada daftar di atas.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      items.map((item) => (
+                        <tr key={item.sku} className="border-t align-middle">
+                          <td className="px-3 py-2">
+                            <p className="font-medium text-foreground">{item.item_name}</p>
+                            <p className="font-mono text-xs text-muted-foreground">{item.sku}</p>
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <p className="font-medium">{formatRupiah(item.effective_price)}</p>
+                            {item.discount_price !== null && (
+                              <p className="text-xs text-muted-foreground line-through">
+                                {formatRupiah(item.original_price)}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              aria-label={`Qty ${item.item_name}`}
+                              type="number"
+                              min={1}
+                              step={1}
+                              value={item.quantity}
+                              onChange={(e) => updateQuantity(item.sku, e.target.value)}
+                              required
+                              className="h-9"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right font-semibold">
+                            {formatRupiah(estimateSubtotal(item))}
+                          </td>
+                          <td className="px-3 py-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Hapus ${item.item_name}`}
+                              onClick={() => removeItem(item.sku)}
+                              className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
