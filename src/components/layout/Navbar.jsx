@@ -1,13 +1,8 @@
-import { Link, NavLink } from "react-router"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Link } from "react-router"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/hooks/useAuth"
-import { cn } from "@/lib/utils"
 import { FileText, LogOut, Store, User } from "lucide-react"
-
-function navLinkClass({ isActive }) {
-  return cn(buttonVariants({ variant: isActive ? "default" : "ghost", size: "sm" }), "gap-2")
-}
 
 /**
  * Navigation Bar component for desktop web application.
@@ -35,16 +30,6 @@ export function Navbar() {
               )}
             </div>
           </Link>
-
-          {/* Navigation Links */}
-          <nav className="flex items-center gap-1.5">
-            <NavLink to="/slips" end className={navLinkClass}>
-              Daftar E-Slip
-            </NavLink>
-            <NavLink to="/slips/new" className={navLinkClass}>
-              Buat E-Slip
-            </NavLink>
-          </nav>
         </div>
 
         {/* Right: User Session & Logout */}

@@ -86,7 +86,6 @@ export function SlipListPage() {
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <ReceiptText className="size-5 text-brand" />
               <h2 className="text-xl font-bold tracking-tight text-foreground">
                 Daftar E-Slip
               </h2>
