@@ -5,6 +5,9 @@
 // Status E-Slip sesuai backend (e_slips.status)
 export const SLIP_STATUSES = ["Open", "Locked", "Paid", "Expired", "Cancelled"]
 
+// Status yang masih bisa diproses kasir POS; Locked tetap aktif agar kasir bisa scan ulang
+const BARCODE_ACTIVE_STATUSES = ["Open", "Locked"]
+
 const STATUS_BADGE_CLASSES = {
   Open: "bg-amber-100 text-amber-700 border-amber-200",
   Locked: "bg-sky-100 text-sky-700 border-sky-200",
@@ -20,4 +23,13 @@ const STATUS_BADGE_CLASSES = {
  */
 export function getStatusBadgeClass(status) {
   return STATUS_BADGE_CLASSES[status] || ""
+}
+
+/**
+ * Whether the slip barcode can still be scanned at the POS.
+ * @param {string} status - Slip status (Open, Locked, Paid, Expired, Cancelled)
+ * @returns {boolean}
+ */
+export function isBarcodeActive(status) {
+  return BARCODE_ACTIVE_STATUSES.includes(status)
 }

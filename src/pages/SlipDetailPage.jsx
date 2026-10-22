@@ -26,9 +26,11 @@ import {
 } from "@/components/ui/breadcrumb"
 import { LoadingState } from "@/components/common/LoadingState"
 import { ErrorState } from "@/components/common/ErrorState"
+import { SlipBarcode } from "@/components/slip/SlipBarcode"
 import { SlipStatusBadge } from "@/components/slip/SlipStatusBadge"
 import { getSlipDetail } from "@/services/slipService"
 import { formatDateTime, formatRupiah } from "@/utils/formatters"
+import { isBarcodeActive } from "@/utils/slip"
 
 const ERROR_MESSAGES = {
   404: "E-Slip tidak ditemukan.",
@@ -100,16 +102,31 @@ export function SlipDetailPage() {
         </ErrorState>
       ) : (
         <>
-          {/* Slip number & status: what the customer shows at the cashier */}
+          {/* Barcode: what the customer shows at the cashier */}
+          <Card className="shadow-xs">
+            <CardContent className="flex flex-col items-center gap-2 text-center">
+              {isBarcodeActive(slip.status) ? (
+                <SlipBarcode value={slip.barcode} />
+              ) : (
+                <>
+                  <p className="font-mono text-xl font-bold tracking-wider text-foreground sm:text-3xl">
+                    {slip.slip_number}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Slip sudah tidak berlaku, barcode tidak dapat discan di kasir.
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Status & total */}
           <Card className="shadow-xs">
             <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Nomor E-Slip
+                  Status
                 </span>
-                <p className="font-mono text-3xl font-bold tracking-wider text-foreground">
-                  {slip.slip_number}
-                </p>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   <SlipStatusBadge status={slip.status} />
                   <span>Berlaku sampai {formatDateTime(slip.expired_at)}</span>
