@@ -14,3 +14,19 @@ export function formatRupiah(amount) {
   return `Rp ${amount.toLocaleString("id-ID")}`
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat("id-ID", {
+  dateStyle: "medium",
+  timeStyle: "short",
+})
+
+/**
+ * Formats an ISO date string as a local date and time, e.g. "22 Okt 2026, 10.00".
+ * @param {string | null | undefined} value
+ * @returns {string} Formatted string, or "-" when empty/invalid
+ */
+export function formatDateTime(value) {
+  if (!value) return "-"
+  const date = new Date(value)
+  return isNaN(date.getTime()) ? "-" : dateTimeFormatter.format(date)
+}
+

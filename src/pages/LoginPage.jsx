@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Navigate, useLocation, useNavigate } from "react-router"
 import { AuthLayout } from "@/layouts/AuthLayout"
 import {
   Card,
@@ -9,30 +10,50 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/useAuth"
 
 /**
  * Login page component wrapped in AuthLayout.
- * Displays a logo placeholder and title above the login card.
- *
- * @param {object} props
- * @param {function} props.onLogin - Callback with { salesId, password } on form submit
+ * Displays a logo and title above the login card. After login, returns the user
+ * to the page they originally requested (default: slip list).
  */
-export function LoginPage({ onLogin }) {
-  const [salesId, setSalesId] = useState("")
-  const [password, setPassword] = useState("")
+export function LoginPage() {
+  const { status, login } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = location.state?.from?.pathname || "/slips"
 
-  function handleSubmit(e) {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  if (status === "authenticated") {
+    return <Navigate to={redirectTo} replace />
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
-    onLogin({ salesId, password })
+    setError("")
+    setSubmitting(true)
+
+    try {
+      await login(username, password)
+      navigate(redirectTo, { replace: true })
+    } catch (err) {
+      setError(err.message || "Login gagal")
+      setSubmitting(false)
+    }
   }
 
   return (
     <AuthLayout>
-      {/* Logo Placeholder & E-Slip Title directly above the Card */}
+      {/* Logo & E-Slip Title directly above the Card */}
       <div className="mb-6 flex flex-col items-center justify-center text-center">
         <div className="mb-3 flex size-16 items-center justify-center rounded-2xl border bg-card p-3 shadow-sm ring-1 ring-foreground/5">
           <img
             src="/transmartlogo.png"
+            alt="Transmart"
             className="size-10 object-contain"
           />
         </div>
@@ -52,14 +73,21 @@ export function LoginPage({ onLogin }) {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {error && (
+              <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 p-2.5 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
             <div className="flex flex-col gap-2">
-              <Label htmlFor="salesId">ID sales</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="salesId"
+                id="username"
                 type="text"
-                placeholder="ID sales"
-                value={salesId}
-                onChange={(e) => setSalesId(e.target.value)}
+                autoComplete="username"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -69,6 +97,7 @@ export function LoginPage({ onLogin }) {
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -76,14 +105,9 @@ export function LoginPage({ onLogin }) {
               />
             </div>
 
-            <Button type="submit" className="mt-2 w-full cursor-pointer">
-              Masuk
+            <Button type="submit" disabled={submitting} className="mt-2 w-full cursor-pointer">
+              {submitting ? "Memproses..." : "Masuk"}
             </Button>
-
-            <p className="text-xs text-muted-foreground bg-muted/60 p-2.5 rounded-md border text-center">
-              <span className="font-semibold text-foreground">Prototype:</span>{" "}
-              sales01 / admin123. Outlet mengikuti akun sales (10011).
-            </p>
           </form>
         </CardContent>
       </Card>
