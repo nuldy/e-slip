@@ -6,9 +6,6 @@ import { SlipListPage } from "@/pages/SlipListPage"
 import { SlipFormPage } from "@/pages/SlipFormPage"
 import { SlipDetailPage } from "@/pages/SlipDetailPage"
 
-/**
- * Definisi route aplikasi. Semua halaman E-Slip membutuhkan login.
- */
 export function App() {
   return (
     <Routes>

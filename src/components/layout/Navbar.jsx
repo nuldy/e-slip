@@ -4,17 +4,12 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/hooks/useAuth"
 import { FileText, LogOut, Store, User } from "lucide-react"
 
-/**
- * Navigation Bar component for desktop web application.
- * Provides brand identity, page navigation, user session info, and logout action.
- */
 export function Navbar() {
   const { user, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card shadow-xs">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        {/* Left: Brand Logo & Navigation Links */}
         <div className="flex items-center gap-8">
           <Link to="/slips" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
             <div className="flex size-9 items-center justify-center rounded-lg bg-brand text-brand-foreground shadow-xs">
@@ -32,7 +27,6 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Right: User Session & Logout */}
         <div className="flex items-center gap-3">
           {user && (
             <div className="hidden sm:flex items-center gap-1.5 rounded-md border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground">

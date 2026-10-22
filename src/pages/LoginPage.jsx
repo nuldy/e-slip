@@ -12,11 +12,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/useAuth"
 
-/**
- * Login page component wrapped in AuthLayout.
- * Displays a logo and title above the login card. After login, returns the user
- * to the page they originally requested (default: slip list).
- */
 export function LoginPage() {
   const { status, login } = useAuth()
   const navigate = useNavigate()
@@ -48,7 +43,6 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      {/* Logo & E-Slip Title directly above the Card */}
       <div className="mb-6 flex flex-col items-center justify-center text-center">
         <div className="mb-3 flex size-16 items-center justify-center rounded-2xl border bg-card p-3 shadow-sm ring-1 ring-foreground/5">
           <img
@@ -65,7 +59,6 @@ export function LoginPage() {
         </p>
       </div>
 
-      {/* Login Card */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="text-xl font-bold">Masuk</CardTitle>

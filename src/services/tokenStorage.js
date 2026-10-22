@@ -1,7 +1,3 @@
-/**
- * Penyimpanan token sesi di localStorage.
- */
-
 const TOKEN_KEY = "token"
 
 export function getToken() {

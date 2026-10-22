@@ -8,14 +8,6 @@ import { Loader2, Plus, Search } from "lucide-react"
 
 const SEARCH_DELAY_MS = 300
 
-/**
- * Searchable dropdown of catalog items. Clicking (or Enter on) an item calls onSelect;
- * the list stays open so several items can be added in a row.
- *
- * @param {object} props
- * @param {(item: object) => void} props.onSelect
- * @param {Record<string, number>} [props.selectedQuantities] - Qty already in the slip, by SKU
- */
 export function ItemPicker({ onSelect, selectedQuantities = {} }) {
   const listboxId = useId()
   const containerRef = useRef(null)
@@ -50,7 +42,6 @@ export function ItemPicker({ onSelect, selectedQuantities = {} }) {
     }
   }, [open, debouncedSearch])
 
-  // Close when clicking outside the picker
   useEffect(() => {
     if (!open) return
     function handlePointerDown(e) {

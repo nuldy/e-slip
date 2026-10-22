@@ -1,8 +1,3 @@
-/**
- * Utilities and helpers for E-Slip domain logic.
- */
-
-// Status E-Slip sesuai backend (e_slips.status)
 export const SLIP_STATUSES = ["Open", "Locked", "Paid", "Expired", "Cancelled"]
 
 // Status yang masih bisa diproses kasir POS; Locked tetap aktif agar kasir bisa scan ulang
@@ -16,20 +11,10 @@ const STATUS_BADGE_CLASSES = {
   Cancelled: "bg-red-100 text-red-700 border-red-200",
 }
 
-/**
- * Returns the appropriate styling classes for status badges.
- * @param {string} status - Slip status (Open, Locked, Paid, Expired, Cancelled)
- * @returns {string} Tailwind CSS classes
- */
 export function getStatusBadgeClass(status) {
   return STATUS_BADGE_CLASSES[status] || ""
 }
 
-/**
- * Whether the slip barcode can still be scanned at the POS.
- * @param {string} status - Slip status (Open, Locked, Paid, Expired, Cancelled)
- * @returns {boolean}
- */
 export function isBarcodeActive(status) {
   return BARCODE_ACTIVE_STATUSES.includes(status)
 }

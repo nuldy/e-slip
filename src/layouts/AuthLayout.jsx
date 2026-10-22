@@ -1,10 +1,3 @@
-/**
- * Layout for unauthenticated / authentication pages.
- * Centers the login experience with a clean, distraction-free backdrop.
- *
- * @param {object} props
- * @param {React.ReactNode} props.children
- */
 export function AuthLayout({ children }) {
   return (
     <div className="min-h-screen w-full bg-slate-50/70 flex flex-col items-center justify-center p-4 sm:p-6">
@@ -17,4 +10,3 @@ export function AuthLayout({ children }) {
     </div>
   )
 }
-

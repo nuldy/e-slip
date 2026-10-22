@@ -46,9 +46,6 @@ function InfoField({ label, children }) {
   )
 }
 
-/**
- * Slip detail page: slip number for the cashier, customer data, items and status history.
- */
 export function SlipDetailPage() {
   const { slipNumber } = useParams()
   const [reloadCount, setReloadCount] = useState(0)
@@ -102,7 +99,6 @@ export function SlipDetailPage() {
         </ErrorState>
       ) : (
         <>
-          {/* Barcode: what the customer shows at the cashier */}
           <Card className="shadow-xs">
             <CardContent className="flex flex-col items-center gap-2 text-center">
               {isBarcodeActive(slip.status) ? (
@@ -120,7 +116,6 @@ export function SlipDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Status & total */}
           <Card className="shadow-xs">
             <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
@@ -144,7 +139,6 @@ export function SlipDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Customer & slip info */}
           <Card className="shadow-xs">
             <CardHeader>
               <CardTitle className="text-base font-bold">Informasi Pesanan</CardTitle>
@@ -159,7 +153,6 @@ export function SlipDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Items */}
           <div className="w-full overflow-hidden rounded-xl border bg-card shadow-xs">
             <Table className="w-full">
               <TableHeader className="bg-muted/70 border-b">
@@ -197,7 +190,6 @@ export function SlipDetailPage() {
             </Table>
           </div>
 
-          {/* Status history */}
           <Card className="shadow-xs">
             <CardHeader>
               <CardTitle className="text-base font-bold">Riwayat Status</CardTitle>

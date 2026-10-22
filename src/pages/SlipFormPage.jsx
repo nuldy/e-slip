@@ -30,11 +30,6 @@ function estimateSubtotal(item) {
   return Math.round(subtotal * 100) / 100
 }
 
-/**
- * Slip creation form page component.
- * Collects customer details and items picked from the catalog dropdown, then creates
- * the slip via the backend and opens its detail page.
- */
 export function SlipFormPage() {
   const navigate = useNavigate()
 
@@ -50,7 +45,6 @@ export function SlipFormPage() {
   const totalEstimated = items.reduce((sum, item) => sum + estimateSubtotal(item), 0)
   const selectedQuantities = Object.fromEntries(items.map((item) => [item.sku, Number(item.quantity) || 0]))
 
-  /** Adds a catalog item, or bumps its qty when it is already in the slip. */
   function addItem(catalogItem) {
     setItems((prev) => {
       const existing = prev.find((item) => item.sku === catalogItem.sku)
@@ -195,7 +189,6 @@ export function SlipFormPage() {
               )}
             </div>
 
-            {/* Items: picked from the catalog dropdown; only qty is editable */}
             <div className="flex flex-col gap-2">
               <Label className="font-semibold">Item</Label>
               <ItemPicker onSelect={addItem} selectedQuantities={selectedQuantities} />

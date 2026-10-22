@@ -24,11 +24,7 @@ const PAGE_SIZE = 10
 
 const headClass = "py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
 
-/**
- * Slip list page component.
- * Lists the store's e-slips with search, status filter and pagination.
- * Filters live in the URL query string so they survive navigation to a slip and back.
- */
+// Filter disimpan di query string URL agar tetap ada saat kembali dari halaman detail
 export function SlipListPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -59,7 +55,6 @@ export function SlipListPage() {
     }
   }, [requestKey, page, status, search])
 
-  /** Updates filter params; any filter change goes back to page 1. */
   function updateParams(changes) {
     const next = new URLSearchParams(searchParams)
     for (const [key, value] of Object.entries(changes)) {
@@ -81,7 +76,6 @@ export function SlipListPage() {
 
   return (
     <div className="w-full space-y-6">
-      {/* Header Card matching table width */}
       <Card className="w-full shadow-xs py-2">
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -105,7 +99,6 @@ export function SlipListPage() {
         </div>
       </Card>
 
-      {/* Filters */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1.5">
           <Button
@@ -143,7 +136,6 @@ export function SlipListPage() {
         </form>
       </div>
 
-      {/* Table */}
       <div className="w-full overflow-hidden rounded-xl border bg-card shadow-xs">
         {loading ? (
           <LoadingState label="Memuat daftar e-slip..." />
@@ -216,7 +208,6 @@ export function SlipListPage() {
         )}
       </div>
 
-      {/* Pagination */}
       {!loading && !result.error && pagination && pagination.total_records > 0 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
