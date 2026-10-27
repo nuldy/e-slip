@@ -20,8 +20,11 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
 import { ItemPicker } from "@/components/slip/ItemPicker"
+import { SpoItemChecks } from "@/components/slip/SpoItemChecks"
+import { SpoLookup } from "@/components/slip/SpoLookup"
 import { createSlip } from "@/services/slipService"
 import { formatRupiah } from "@/utils/formatters"
+import { checkSpoItems, countSpoMismatches } from "@/utils/spo"
 import { Trash2 } from "lucide-react"
 
 // Perkiraan subtotal untuk tampilan; nilai final dihitung ulang oleh backend
@@ -38,12 +41,14 @@ export function SlipFormPage() {
   const [address, setAddress] = useState("")
   const [hasSpo, setHasSpo] = useState(false)
   const [spoNumber, setSpoNumber] = useState("")
+  const [spo, setSpo] = useState(null)
   const [items, setItems] = useState([])
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   const totalEstimated = items.reduce((sum, item) => sum + estimateSubtotal(item), 0)
   const selectedQuantities = Object.fromEntries(items.map((item) => [item.sku, Number(item.quantity) || 0]))
+  const spoChecks = hasSpo && spo ? checkSpoItems(spo.items, items) : []
 
   function addItem(catalogItem) {
     setItems((prev) => {
@@ -74,6 +79,16 @@ export function SlipFormPage() {
       return
     }
 
+    if (hasSpo && !spo) {
+      setError("Cari nomor SPO terlebih dahulu sampai data SPO muncul.")
+      return
+    }
+
+    if (countSpoMismatches(spoChecks) > 0) {
+      setError("Item E-Slip belum sesuai dengan SPO. Periksa tabel item SPO di atas.")
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -82,7 +97,7 @@ export function SlipFormPage() {
         customer_phone: phoneNumber.trim(),
         shipping_address: address.trim(),
         is_spo: hasSpo,
-        spo_number: hasSpo ? spoNumber.trim() : "",
+        spo_number: hasSpo ? spo.spo_number : "",
         items: items.map((item) => ({
           sku: item.sku,
           item_name: item.item_name,
@@ -162,31 +177,27 @@ export function SlipFormPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-2.5 py-1">
-                <Checkbox
-                  id="hasSpo"
-                  checked={hasSpo}
-                  onCheckedChange={(checked) => setHasSpo(checked === true)}
-                />
-                <Label htmlFor="hasSpo" className="font-semibold cursor-pointer">
-                  Ada SPO
-                </Label>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="flex h-9 items-center gap-2.5">
+                  <Checkbox
+                    id="hasSpo"
+                    checked={hasSpo}
+                    onCheckedChange={(checked) => setHasSpo(checked === true)}
+                  />
+                  <Label htmlFor="hasSpo" className="font-semibold cursor-pointer">
+                    Ada SPO
+                  </Label>
+                </div>
+
+                {hasSpo && (
+                  <div className="sm:w-96">
+                    <SpoLookup spoNumber={spoNumber} onSpoNumberChange={setSpoNumber} onSpoChange={setSpo} />
+                  </div>
+                )}
               </div>
 
-              {hasSpo && (
-                <Input
-                  id="spoNumber"
-                  type="text"
-                  aria-label="Nomor SPO"
-                  placeholder="Nomor SPO"
-                  maxLength={50}
-                  value={spoNumber}
-                  onChange={(e) => setSpoNumber(e.target.value)}
-                  required
-                  className="sm:max-w-xs"
-                />
-              )}
+              {hasSpo && spo && <SpoItemChecks spo={spo} checks={spoChecks} />}
             </div>
 
             <div className="flex flex-col gap-2">
