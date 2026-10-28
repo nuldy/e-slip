@@ -18,3 +18,14 @@ export function getStatusBadgeClass(status) {
 export function isBarcodeActive(status) {
   return BARCODE_ACTIVE_STATUSES.includes(status)
 }
+
+// Pengganti barcode saat slip sudah tidak bisa diproses kasir
+const INACTIVE_BARCODE_MESSAGES = {
+  Paid: "E-Slip sudah dibayar. Barcode tidak ditampilkan lagi.",
+  Cancelled: "E-Slip dibatalkan. Barcode tidak dapat digunakan di kasir.",
+  Expired: "E-Slip sudah kedaluwarsa. Barcode tidak dapat discan di kasir.",
+}
+
+export function getInactiveBarcodeMessage(status) {
+  return INACTIVE_BARCODE_MESSAGES[status] || "Slip sudah tidak berlaku, barcode tidak dapat discan di kasir."
+}

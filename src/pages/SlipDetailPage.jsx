@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router"
 import {
   Card,
@@ -26,15 +25,41 @@ import {
 } from "@/components/ui/breadcrumb"
 import { LoadingState } from "@/components/common/LoadingState"
 import { ErrorState } from "@/components/common/ErrorState"
+import { PaymentSuccessDialog } from "@/components/slip/PaymentSuccessDialog"
 import { SlipBarcode } from "@/components/slip/SlipBarcode"
 import { SlipStatusBadge } from "@/components/slip/SlipStatusBadge"
-import { getSlipDetail } from "@/services/slipService"
+import { useSlipDetail } from "@/hooks/useSlipDetail"
+import { cn } from "@/lib/utils"
 import { formatDateTime, formatRupiah } from "@/utils/formatters"
-import { isBarcodeActive } from "@/utils/slip"
+import { getInactiveBarcodeMessage, isBarcodeActive } from "@/utils/slip"
 
 const ERROR_MESSAGES = {
   404: "E-Slip tidak ditemukan.",
   403: "E-Slip ini milik toko lain dan tidak dapat dibuka.",
+}
+
+function getStatusTimeText(slip) {
+  switch (slip.status) {
+    case "Locked":
+      return `Sedang diproses kasir sejak ${formatDateTime(slip.locked_at)}`
+    case "Paid":
+      return `Dibayar pada ${formatDateTime(slip.paid_at)}`
+    case "Cancelled":
+      return slip.cancelled_at ? `Dibatalkan pada ${formatDateTime(slip.cancelled_at)}` : "Dibatalkan"
+    case "Expired":
+      return `Kedaluwarsa sejak ${formatDateTime(slip.expired_at)}`
+    default:
+      return `Berlaku sampai ${formatDateTime(slip.expired_at)}`
+  }
+}
+
+function LiveIndicator({ failed }) {
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 text-xs", failed ? "text-amber-700" : "text-muted-foreground")}>
+      <span className={cn("size-2 rounded-full", failed ? "bg-amber-500" : "animate-pulse bg-emerald-500")} />
+      {failed ? "Gagal memperbarui status, mencoba lagi..." : "Status diperbarui otomatis"}
+    </span>
+  )
 }
 
 function InfoField({ label, children }) {
@@ -48,27 +73,16 @@ function InfoField({ label, children }) {
 
 export function SlipDetailPage() {
   const { slipNumber } = useParams()
-  const [reloadCount, setReloadCount] = useState(0)
-  const [result, setResult] = useState({ key: null, slip: null, error: null })
-
-  const requestKey = `${slipNumber}|${reloadCount}`
-  const loading = result.key !== requestKey
-
-  useEffect(() => {
-    let active = true
-    getSlipDetail(slipNumber)
-      .then((slip) => {
-        if (active) setResult({ key: requestKey, slip, error: null })
-      })
-      .catch((error) => {
-        if (active) setResult({ key: requestKey, slip: null, error })
-      })
-    return () => {
-      active = false
-    }
-  }, [requestKey, slipNumber])
-
-  const { slip, error } = result
+  const {
+    slip,
+    error,
+    loading,
+    live,
+    refreshFailed,
+    reload,
+    paymentConfirmed,
+    dismissPaymentConfirmed,
+  } = useSlipDetail(slipNumber)
 
   return (
     <div className="w-full space-y-6">
@@ -91,7 +105,7 @@ export function SlipDetailPage() {
       ) : error ? (
         <ErrorState
           message={ERROR_MESSAGES[error.status] || error.message}
-          onRetry={ERROR_MESSAGES[error.status] ? undefined : () => setReloadCount((n) => n + 1)}
+          onRetry={ERROR_MESSAGES[error.status] ? undefined : reload}
         >
           <Link to="/slips" className={buttonVariants({ variant: "outline", size: "sm" })}>
             Kembali ke daftar
@@ -109,7 +123,7 @@ export function SlipDetailPage() {
                     {slip.slip_number}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Slip sudah tidak berlaku, barcode tidak dapat discan di kasir.
+                    {getInactiveBarcodeMessage(slip.status)}
                   </p>
                 </>
               )}
@@ -124,8 +138,9 @@ export function SlipDetailPage() {
                 </span>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   <SlipStatusBadge status={slip.status} />
-                  <span>Berlaku sampai {formatDateTime(slip.expired_at)}</span>
+                  <span>{getStatusTimeText(slip)}</span>
                 </div>
+                {live && <LiveIndicator failed={refreshFailed} />}
               </div>
               <div className="sm:text-right">
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -224,6 +239,14 @@ export function SlipDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          <PaymentSuccessDialog
+            slip={slip}
+            open={paymentConfirmed}
+            onOpenChange={(open) => {
+              if (!open) dismissPaymentConfirmed()
+            }}
+          />
         </>
       )}
     </div>
