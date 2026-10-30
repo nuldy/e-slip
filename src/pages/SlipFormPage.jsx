@@ -33,6 +33,21 @@ function estimateSubtotal(item) {
   return Math.round(subtotal * 100) / 100
 }
 
+function isValidQuantity(quantity) {
+  const number = Number(quantity)
+  return Number.isInteger(number) && number > 0
+}
+
+function getMissingRequirements({ customerName, items, hasSpo, spo, spoChecks }) {
+  const missing = []
+  if (!customerName.trim()) missing.push("nama customer")
+  if (items.length === 0) missing.push("minimal 1 item")
+  if (items.some((item) => !isValidQuantity(item.quantity))) missing.push("qty item berupa bilangan bulat minimal 1")
+  if (hasSpo && !spo) missing.push("nomor SPO yang sudah dicari")
+  if (countSpoMismatches(spoChecks) > 0) missing.push("item yang sesuai dengan SPO")
+  return missing
+}
+
 export function SlipFormPage() {
   const navigate = useNavigate()
 
@@ -49,6 +64,7 @@ export function SlipFormPage() {
   const totalEstimated = items.reduce((sum, item) => sum + estimateSubtotal(item), 0)
   const selectedQuantities = Object.fromEntries(items.map((item) => [item.sku, Number(item.quantity) || 0]))
   const spoChecks = hasSpo && spo ? checkSpoItems(spo.items, items) : []
+  const missingRequirements = getMissingRequirements({ customerName, items, hasSpo, spo, spoChecks })
 
   function addItem(catalogItem) {
     setItems((prev) => {
@@ -73,22 +89,6 @@ export function SlipFormPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError("")
-
-    if (items.length === 0) {
-      setError("Tambahkan minimal 1 item dari daftar item.")
-      return
-    }
-
-    if (hasSpo && !spo) {
-      setError("Cari nomor SPO terlebih dahulu sampai data SPO muncul.")
-      return
-    }
-
-    if (countSpoMismatches(spoChecks) > 0) {
-      setError("Item E-Slip belum sesuai dengan SPO. Periksa tabel item SPO di atas.")
-      return
-    }
-
     setSubmitting(true)
 
     try {
@@ -288,9 +288,28 @@ export function SlipFormPage() {
             )}
 
             <div className="flex flex-col gap-2.5 pt-2">
-              <Button type="submit" disabled={submitting} className="w-full cursor-pointer">
-                {submitting ? "Menyimpan..." : "Simpan E-SLIP"}
-              </Button>
+              {/* Tooltip di pembungkus: tombol disabled tidak menerima hover. Fokus lewat tabIndex untuk tap di HP dan keyboard */}
+              <div
+                tabIndex={missingRequirements.length > 0 ? 0 : undefined}
+                className="group relative rounded-md outline-none has-disabled:cursor-not-allowed focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {missingRequirements.length > 0 && (
+                  <p
+                    role="tooltip"
+                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-full -translate-x-1/2 rounded-md bg-foreground px-3 py-1.5 text-center text-xs text-background shadow-md group-hover:block group-focus:block"
+                  >
+                    Lengkapi dulu: {missingRequirements.join(", ")}.
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={submitting || missingRequirements.length > 0}
+                  className="w-full cursor-pointer"
+                >
+                  {submitting ? "Menyimpan..." : "Simpan E-SLIP"}
+                </Button>
+              </div>
 
               <Button
                 type="button"
